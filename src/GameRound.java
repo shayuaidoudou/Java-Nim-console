@@ -62,15 +62,6 @@ public class GameRound {
                 return;
             }
 
-            // 胜利判定在轮换玩家之前
-            if (stonesLeft == 0) {
-                System.out.println("Game Over");
-                System.out.println(currentPlayer.getGivenName() + " " + currentPlayer.getFamilyName() + " wins!");
-                currentPlayer.recordGame(true);
-                nextPlayer.recordGame(false);
-                return;
-            }
-
             // 玩家轮换
             NimPlayer temp = currentPlayer;
             currentPlayer = nextPlayer;
