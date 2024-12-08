@@ -13,7 +13,6 @@ public class Main {
         System.out.println("Welcome to Nim");
         Scanner scanner = new Scanner(System.in);
         String input;
-
         while (true) {
             System.out.print("$");
             input = scanner.nextLine().trim();
@@ -26,6 +25,10 @@ public class Main {
     }
 
     private static void handleCommand(String input) {
+        if (input.isEmpty()) {
+            System.out.println("Please enter a valid command.");
+            return;
+        }
         String[] parts = input.split(" ", 2);
         String command = parts[0];
         String arguments = parts.length > 1 ? parts[1] : "";
@@ -65,14 +68,12 @@ public class Main {
         String username = args[0];
         String familyName = args[1];
         String givenName = args[2];
-
         for (NimPlayer player : players) {
             if (player.getUsername().equals(username)) {
                 System.out.println("The player already exists.");
                 return;
             }
         }
-
         players.add(new NimPlayer(username, familyName, givenName));
     }
 
@@ -81,27 +82,22 @@ public class Main {
             System.out.println("Are you sure you want to remove all players? (Y/N)");
             Scanner scanner = new Scanner(System.in);
             String confirmation = scanner.nextLine().trim();
-            if (confirmation.equalsIgnoreCase("Y")) {
+            if (confirmation.equalsIgnoreCase("Y"))
                 players.clear();
-            }
             return;
         }
-
         String username = arguments.trim();
         NimPlayer playerToRemove = null;
-
         for (NimPlayer player : players) {
             if (player.getUsername().equals(username)) {
                 playerToRemove = player;
                 break;
             }
         }
-
         if (playerToRemove == null) {
             System.out.println("The player does not exist.");
             return;
         }
-
         players.remove(playerToRemove);
     }
 
@@ -111,13 +107,10 @@ public class Main {
             System.out.println("Invalid syntax. Correct format: editplayer username,new_family_name,new_given_name");
             return;
         }
-        String username = args[0];
-        String newFamilyName = args[1];
-        String newGivenName = args[2];
         for (NimPlayer player : players) {
-            if (player.getUsername().equals(username)) {
-                player.setFamilyName(newFamilyName);
-                player.setGivenName(newGivenName);
+            if (player.getUsername().equals(args[0])) {
+                player.setFamilyName(args[1]);
+                player.setGivenName(args[2]);
                 return;
             }
         }
@@ -130,9 +123,7 @@ public class Main {
             Scanner scanner = new Scanner(System.in);
             String confirmation = scanner.nextLine().trim();
             if (confirmation.equalsIgnoreCase("Y")) {
-                for (NimPlayer player : players) {
-                    player.resetStats();
-                }
+                players.forEach(NimPlayer::resetStats);
             }
             return;
         }
@@ -148,46 +139,38 @@ public class Main {
 
     private static void displayPlayer(String arguments) {
         if (arguments.isEmpty()) {
-            for (NimPlayer player : players) {
-                System.out.println(player);
-            }
+            players.forEach(System.out::println);
             return;
         }
         String username = arguments.trim();
-        for (NimPlayer player : players) {
-            if (player.getUsername().equals(username)) {
-                System.out.println(player);
-                return;
-            }
-        }
-        System.out.println("The player does not exist.");
+        boolean playerFound = players.stream()
+                .filter(player -> player.getUsername().equals(username))
+                .peek(System.out::println)
+                .findFirst()
+                .isPresent();
+        if (!playerFound) System.out.println("The player does not exist.");
     }
 
+
     private static void displayRankings(String arguments) {
+        sortPlayersByWinRate(arguments);
+        players.forEach(player ->
+                System.out.printf("%3d%% | %02d games | %s %s%n",
+                        (int) (player.getWinRate() * 100),
+                        player.getGamesPlayed(),
+                        player.getGivenName(),
+                        player.getFamilyName()));
+    }
+
+    private static void sortPlayersByWinRate(String order) {
         players.sort((p1, p2) -> {
             int winRateComparison = Double.compare(p2.getWinRate(), p1.getWinRate());
-            if (winRateComparison == 0) {
+            if (winRateComparison == 0)
                 return Integer.compare(p2.getGamesPlayed(), p1.getGamesPlayed());
-            }
-            return winRateComparison;
+            return order.equalsIgnoreCase("asc") ? Double.compare(p1.getWinRate(), p2.getWinRate()) : winRateComparison;
         });
-        if (arguments.equalsIgnoreCase("asc")) {
-            players.sort((p1, p2) -> {
-                int winRateComparison = Double.compare(p1.getWinRate(), p2.getWinRate());
-                if (winRateComparison == 0) {
-                    return Integer.compare(p2.getGamesPlayed(), p1.getGamesPlayed());
-                }
-                return winRateComparison;
-            });
-        }
-        for (NimPlayer player : players) {
-            System.out.printf("%3d%% | %02d games | %s %s%n",
-                    (int) (player.getWinRate() * 100),
-                    player.getGamesPlayed(),
-                    player.getGivenName(),
-                    player.getFamilyName());
-        }
     }
+
 
     private static void startGame(String arguments) {
         String[] args = arguments.split(",");
@@ -197,19 +180,11 @@ public class Main {
         }
         int initialStones = Integer.parseInt(args[0]);
         int upperBound = Integer.parseInt(args[1]);
-        String username1 = args[2];
-        String username2 = args[3];
-
         NimPlayer player1 = null;
         NimPlayer player2 = null;
-
         for (NimPlayer player : players) {
-            if (player.getUsername().equals(username1)) {
-                player1 = player;
-            }
-            if (player.getUsername().equals(username2)) {
-                player2 = player;
-            }
+            if (player.getUsername().equals(args[2])) player1 = player;
+            if (player.getUsername().equals(args[3])) player2 = player;
         }
         if (player1 == null || player2 == null) {
             System.out.println("One of the players does not exist.");
